@@ -296,10 +296,8 @@ defmodule FunWithFlags.UI.RouterTest do
     |> Router.call(@opts)
   end
 
-  # Plug.Test's conn/3 does not URL-decode each path segment the way the real
-  # Cowboy/Bandit adapters do, so a path like `/flags/feature%2Ffoo` ends up in
-  # `path_info` as `["flags", "feature%2Ffoo"]` instead of `["flags", "feature/foo"]`.
-  # We simulate the real adapter by overriding `path_info` after building the conn.
+  # Plug.Test doesn't URL-decode path segments like real adapters do,
+  # so we override path_info to simulate Cowboy/Bandit behavior.
   defp decoded_request!(method, path, path_info) do
     conn(method, path)
     |> Map.put(:path_info, path_info)

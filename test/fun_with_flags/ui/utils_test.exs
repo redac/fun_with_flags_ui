@@ -201,6 +201,28 @@ defmodule FunWithFlags.UI.UtilsTest do
   end
 
 
+  describe "url_safe(value)" do
+    test "percent-encodes slashes" do
+      assert "feature%2Ffoo" = Utils.url_safe("feature/foo")
+    end
+
+    test "percent-encodes reserved characters" do
+      assert "a%3Fb" = Utils.url_safe("a?b")
+      assert "a%23b" = Utils.url_safe("a#b")
+      assert "a%20b" = Utils.url_safe("a b")
+      assert "a%3Ab" = Utils.url_safe("a:b")
+    end
+
+    test "leaves unreserved characters untouched" do
+      assert "Normal_name-1.0~final" = Utils.url_safe("Normal_name-1.0~final")
+    end
+
+    test "accepts atoms" do
+      assert "feature%2Ffoo" = Utils.url_safe(:"feature/foo")
+    end
+  end
+
+
   describe "sanitize(name)" do
     test "it removes leading and trailing whitespace" do
       assert "apricot" = Utils.sanitize(" apricot   ")

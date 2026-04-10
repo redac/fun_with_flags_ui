@@ -158,6 +158,12 @@ defmodule FunWithFlags.UI.Utils do
     |> String.trim()
   end
 
+  def url_safe(val) do
+    val
+    |> to_string()
+    |> URI.encode(&URI.char_unreserved?/1)
+  end
+
   def validate(name) do
     string = to_string(name)
     cond do

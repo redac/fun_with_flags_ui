@@ -5,6 +5,7 @@ defmodule FunWithFlags.UI.Templates do
   alias FunWithFlags.Flag
   alias FunWithFlags.UI.Utils
   import FunWithFlags.UI.HTMLEscape, only: [html_escape: 1]
+  import FunWithFlags.UI.Utils, only: [url_safe: 1]
 
   @templates [
     _head: "_head",
@@ -77,9 +78,4 @@ defmodule FunWithFlags.UI.Templates do
   end
 
 
-  def url_safe(val) do
-    val
-    |> to_string()
-    |> URI.encode(&URI.char_unreserved?/1)
-  end
 end

@@ -161,28 +161,6 @@ defmodule FunWithFlags.UI.TemplatesTest do
   end
 
 
-  describe "url_safe/1" do
-    test "percent-encodes slashes" do
-      assert Templates.url_safe("feature/foo") == "feature%2Ffoo"
-    end
-
-    test "percent-encodes URL-reserved characters that would otherwise break routing" do
-      assert Templates.url_safe("a?b") == "a%3Fb"
-      assert Templates.url_safe("a#b") == "a%23b"
-      assert Templates.url_safe("a b") == "a%20b"
-      assert Templates.url_safe("a:b") == "a%3Ab"
-    end
-
-    test "leaves unreserved characters untouched" do
-      assert Templates.url_safe("Normal_name-1.0~final") == "Normal_name-1.0~final"
-    end
-
-    test "accepts atoms" do
-      assert Templates.url_safe(:"feature/foo") == "feature%2Ffoo"
-    end
-  end
-
-
   describe "new()" do
     test "it renders", %{conn: conn} do
       out = Templates.new(conn: conn)
