@@ -139,7 +139,7 @@ defmodule FunWithFlags.UI.TemplatesTest do
       out = Templates.details(conn: conn, flag: flag)
 
       assert String.contains?(out, ~s{<div id="actor_moss:123"})
-      assert String.contains?(out, ~s{<form action="/pear/flags/avocado/actors/moss:123" method="post"})
+      assert String.contains?(out, ~s{<form action="/pear/flags/avocado/actors/moss%3A123" method="post"})
 
       assert String.contains?(out, ~s{<div id="group_rocks"})
       assert String.contains?(out, ~s{<form action="/pear/flags/avocado/groups/rocks" method="post"})
@@ -153,10 +153,32 @@ defmodule FunWithFlags.UI.TemplatesTest do
       out = Templates.details(conn: conn, flag: flag)
 
       assert String.contains?(out, ~s{<div id="actor_moss:&lt;h1&gt;123&lt;/h1&gt;"})
-      assert String.contains?(out, ~s{<form action="/pear/flags/avocado/actors/moss:%3Ch1%3E123%3C/h1%3E" method="post"})
+      assert String.contains?(out, ~s{<form action="/pear/flags/avocado/actors/moss%3A%3Ch1%3E123%3C%2Fh1%3E" method="post"})
 
       assert String.contains?(out, ~s{<div id="group_rocks"})
       assert String.contains?(out, ~s{<form action="/pear/flags/avocado/groups/rocks" method="post"})
+    end
+  end
+
+
+  describe "url_safe/1" do
+    test "percent-encodes slashes" do
+      assert Templates.url_safe("feature/foo") == "feature%2Ffoo"
+    end
+
+    test "percent-encodes URL-reserved characters that would otherwise break routing" do
+      assert Templates.url_safe("a?b") == "a%3Fb"
+      assert Templates.url_safe("a#b") == "a%23b"
+      assert Templates.url_safe("a b") == "a%20b"
+      assert Templates.url_safe("a:b") == "a%3Ab"
+    end
+
+    test "leaves unreserved characters untouched" do
+      assert Templates.url_safe("Normal_name-1.0~final") == "Normal_name-1.0~final"
+    end
+
+    test "accepts atoms" do
+      assert Templates.url_safe(:"feature/foo") == "feature%2Ffoo"
     end
   end
 

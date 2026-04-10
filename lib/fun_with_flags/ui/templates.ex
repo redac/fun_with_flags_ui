@@ -80,6 +80,6 @@ defmodule FunWithFlags.UI.Templates do
   def url_safe(val) do
     val
     |> to_string()
-    |> URI.encode()
+    |> URI.encode(&URI.char_unreserved?/1)
   end
 end

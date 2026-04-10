@@ -141,7 +141,7 @@ defmodule FunWithFlags.UI.Router do
       FunWithFlags.disable(flag_name, for_actor: actor)
     end
 
-    redirect_to conn, "/flags/#{name}#actor_#{actor_id}"
+    redirect_to conn, "/flags/#{name}#actor_#{encode_segment(actor_id)}"
   end
 
 
@@ -169,7 +169,7 @@ defmodule FunWithFlags.UI.Router do
       FunWithFlags.disable(flag_name, for_group: group_name)
     end
 
-    redirect_to conn, "/flags/#{name}#group_#{group_name}"
+    redirect_to conn, "/flags/#{name}#group_#{encode_segment(group_name)}"
   end
 
 
@@ -209,7 +209,7 @@ defmodule FunWithFlags.UI.Router do
         else
           FunWithFlags.disable(flag_name, for_actor: actor)
         end
-        redirect_to conn, "/flags/#{name}#actor_#{actor_id}"
+        redirect_to conn, "/flags/#{name}#actor_#{encode_segment(actor_id)}"
       {:fail, reason} ->
         {:ok, flag} = Utils.get_flag(name)
         body = Templates.details(conn: conn, flag: flag, actor_error_message: "The actor ID #{reason}.")
@@ -232,7 +232,7 @@ defmodule FunWithFlags.UI.Router do
         else
           FunWithFlags.disable(flag_name, for_group: group_name)
         end
-        redirect_to conn, "/flags/#{name}#group_#{group_name}"
+        redirect_to conn, "/flags/#{name}#group_#{encode_segment(group_name)}"
       {:fail, reason} ->
         {:ok, flag} = Utils.get_flag(name)
         body = Templates.details(conn: conn, flag: flag, group_error_message: "The group name #{reason}.")
@@ -278,6 +278,13 @@ defmodule FunWithFlags.UI.Router do
     |> put_resp_header("location", path)
     |> put_resp_content_type("text/html")
     |> send_resp(302, "<html><body>You are being <a href=\"#{path}\">redirected</a>.</body></html>")
+  end
+
+
+  defp encode_segment(value) do
+    value
+    |> to_string()
+    |> URI.encode(&URI.char_unreserved?/1)
   end
 
 

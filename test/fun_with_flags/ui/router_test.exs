@@ -200,6 +200,77 @@ defmodule FunWithFlags.UI.RouterTest do
   end
 
 
+  describe "gates with '/' in the for value" do
+    # Actor ids and group names are free-text input through the admin form and
+    # only filter `?` via Utils.validate/1, so they can legitimately contain `/`.
+
+    setup do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one)
+      :ok
+    end
+
+    test "PATCH /flags/:name/actors/<encoded> toggles the actor gate and redirects with an encoded actor id" do
+      {:ok, true} =
+        FunWithFlags.enable(:test_flag_one, for_actor: %FunWithFlags.UI.SimpleActor{id: "w:foo/bar"})
+
+      conn =
+        decoded_request!(
+          :patch,
+          "/flags/test_flag_one/actors/w%3Afoo%2Fbar",
+          ["flags", "test_flag_one", "actors", "w:foo/bar"],
+          %{enabled: "false"}
+        )
+
+      assert 302 = conn.status
+      assert ["/flags/test_flag_one#actor_w%3Afoo%2Fbar"] = get_resp_header(conn, "location")
+    end
+
+    test "DELETE /flags/:name/actors/<encoded> clears the actor gate and redirects" do
+      {:ok, true} =
+        FunWithFlags.enable(:test_flag_one, for_actor: %FunWithFlags.UI.SimpleActor{id: "w:foo/bar"})
+
+      conn =
+        decoded_request!(
+          :delete,
+          "/flags/test_flag_one/actors/w%3Afoo%2Fbar",
+          ["flags", "test_flag_one", "actors", "w:foo/bar"]
+        )
+
+      assert 302 = conn.status
+      assert ["/flags/test_flag_one#actor_gates"] = get_resp_header(conn, "location")
+    end
+
+    test "PATCH /flags/:name/groups/<encoded> toggles the group gate and redirects with an encoded group name" do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one, for_group: "tenants/eu")
+
+      conn =
+        decoded_request!(
+          :patch,
+          "/flags/test_flag_one/groups/tenants%2Feu",
+          ["flags", "test_flag_one", "groups", "tenants/eu"],
+          %{enabled: "false"}
+        )
+
+      assert 302 = conn.status
+      assert ["/flags/test_flag_one#group_tenants%2Feu"] = get_resp_header(conn, "location")
+    end
+
+    test "DELETE /flags/:name/groups/<encoded> clears the group gate and redirects" do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one, for_group: "tenants/eu")
+
+      conn =
+        decoded_request!(
+          :delete,
+          "/flags/test_flag_one/groups/tenants%2Feu",
+          ["flags", "test_flag_one", "groups", "tenants/eu"]
+        )
+
+      assert 302 = conn.status
+      assert ["/flags/test_flag_one#group_gates"] = get_resp_header(conn, "location")
+    end
+  end
+
+
   # For GET and DELETE
   #
   defp request!(method, path) do
@@ -217,6 +288,23 @@ defmodule FunWithFlags.UI.RouterTest do
   defp request!(method, path, params) when is_map(params) do
     conn(method, path, Plug.Conn.Query.encode(params))
     |> put_req_header("content-type", "application/x-www-form-urlencoded")
+    |> Router.call(@opts)
+  end
+
+  # Plug.Test's conn/3 does not URL-decode each path segment the way the real
+  # Cowboy/Bandit adapters do, so a path like `/flags/feature%2Ffoo` ends up in
+  # `path_info` as `["flags", "feature%2Ffoo"]` instead of `["flags", "feature/foo"]`.
+  # We simulate the real adapter by overriding `path_info` after building the conn.
+  defp decoded_request!(method, path, path_info) do
+    conn(method, path)
+    |> Map.put(:path_info, path_info)
+    |> Router.call(@opts)
+  end
+
+  defp decoded_request!(method, path, path_info, params) when is_map(params) do
+    conn(method, path, Plug.Conn.Query.encode(params))
+    |> put_req_header("content-type", "application/x-www-form-urlencoded")
+    |> Map.put(:path_info, path_info)
     |> Router.call(@opts)
   end
 end
