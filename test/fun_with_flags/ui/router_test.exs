@@ -200,16 +200,9 @@ defmodule FunWithFlags.UI.RouterTest do
   end
 
 
-  describe "gates with '/' in the for value" do
-    # Actor ids and group names are free-text input through the admin form and
-    # only filter `?` via Utils.validate/1, so they can legitimately contain `/`.
-
-    setup do
+  describe "PATCH /flags/:name/actors/:actor_id" do
+    test "with an actor id containing '/', it toggles the gate and redirects with an encoded id" do
       {:ok, true} = FunWithFlags.enable(:test_flag_one)
-      :ok
-    end
-
-    test "PATCH /flags/:name/actors/<encoded> toggles the actor gate and redirects with an encoded actor id" do
       {:ok, true} =
         FunWithFlags.enable(:test_flag_one, for_actor: %FunWithFlags.UI.SimpleActor{id: "w:foo/bar"})
 
@@ -224,8 +217,12 @@ defmodule FunWithFlags.UI.RouterTest do
       assert 302 = conn.status
       assert ["/flags/test_flag_one#actor_w%3Afoo%2Fbar"] = get_resp_header(conn, "location")
     end
+  end
 
-    test "DELETE /flags/:name/actors/<encoded> clears the actor gate and redirects" do
+
+  describe "DELETE /flags/:name/actors/:actor_id" do
+    test "with an actor id containing '/', it clears the gate and redirects" do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one)
       {:ok, true} =
         FunWithFlags.enable(:test_flag_one, for_actor: %FunWithFlags.UI.SimpleActor{id: "w:foo/bar"})
 
@@ -239,8 +236,12 @@ defmodule FunWithFlags.UI.RouterTest do
       assert 302 = conn.status
       assert ["/flags/test_flag_one#actor_gates"] = get_resp_header(conn, "location")
     end
+  end
 
-    test "PATCH /flags/:name/groups/<encoded> toggles the group gate and redirects with an encoded group name" do
+
+  describe "PATCH /flags/:name/groups/:group_name" do
+    test "with a group name containing '/', it toggles the gate and redirects with an encoded name" do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one)
       {:ok, true} = FunWithFlags.enable(:test_flag_one, for_group: "tenants/eu")
 
       conn =
@@ -254,8 +255,12 @@ defmodule FunWithFlags.UI.RouterTest do
       assert 302 = conn.status
       assert ["/flags/test_flag_one#group_tenants%2Feu"] = get_resp_header(conn, "location")
     end
+  end
 
-    test "DELETE /flags/:name/groups/<encoded> clears the group gate and redirects" do
+
+  describe "DELETE /flags/:name/groups/:group_name" do
+    test "with a group name containing '/', it clears the gate and redirects" do
+      {:ok, true} = FunWithFlags.enable(:test_flag_one)
       {:ok, true} = FunWithFlags.enable(:test_flag_one, for_group: "tenants/eu")
 
       conn =
